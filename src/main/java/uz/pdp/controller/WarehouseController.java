@@ -2,7 +2,7 @@ package uz.pdp.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import uz.pdp.model.WarehouseAddDto;
+import uz.pdp.model.WarehouseAddAddDto;
 import uz.pdp.model.WarehouseDto;
 import uz.pdp.service.WarehouseService;
 
@@ -20,7 +20,7 @@ public class WarehouseController {
     }
 
     @PostMapping(value = "/add")
-    private WarehouseDto add(@RequestBody WarehouseAddDto warehouseAddDto) {
+    private WarehouseDto add(@RequestBody WarehouseAddAddDto warehouseAddDto) {
         return warehouseService.add(warehouseAddDto);
     }
 

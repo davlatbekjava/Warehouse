@@ -5,17 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.io.Serializable;
-
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class WarehouseDto implements Serializable {
+public class WarehouseDto extends AbstractDto {
 
-    private Long id;
-
-    private String name;
-
-    private Boolean active;
 }
