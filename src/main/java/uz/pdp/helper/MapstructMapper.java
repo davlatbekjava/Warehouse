@@ -60,6 +60,16 @@ public interface MapstructMapper {
 
     List<InputDto> toInputDto(List<Input> input);
 
-
     InputProductDto toInputProductDto(InputProduct inputProduct);
+
+    Client toClient(ClientAddDto addDto);
+
+    ClientDto toClientDto(Client client);
+
+    @Mapping(target = "currency",source = "currency.name")
+    OutputDto toOutputDto(Output savedOutput);
+
+    List<OutputDto> toOutputDto(List<Output> savedOutput);
+
+    OutputProductDto toOutputProductDto(OutputProduct outputProduct);
 }

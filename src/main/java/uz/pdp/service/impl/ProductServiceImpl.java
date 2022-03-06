@@ -1,5 +1,7 @@
 package uz.pdp.service.impl;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uz.pdp.entity.Attachment;
@@ -62,7 +64,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductDto add(ProductAddDto addDto) {
+    public ResponseEntity<?> add(ProductAddDto addDto) {
         //Product name ni tekshirish
         if (Utils.isEmpty(addDto.getName())){
             throw new RuntimeException("Product name should not be null");
@@ -74,7 +76,12 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        Category category = categoryService.validate(addDto.getCategoryId());
+        ResponseEntity<?> responseEntity = categoryService.validate(addDto.getCategoryId());
+        if (responseEntity.getStatusCodeValue()!=200){
+            return responseEntity;
+        }
+        Category category = (Category) responseEntity.getBody();
+
         Measurement measurement = measurementService.validate(addDto.getMeasurementId());
         Attachment attachment = attachmentService.validate(addDto.getAttachmentId());
 
@@ -86,7 +93,8 @@ public class ProductServiceImpl implements ProductService {
         product.setActive(true);
 
         Product savedProduct = productRepository.save(product);
-        return mapstructMapper.toProductDto(savedProduct);
+        ProductDto productDto = mapstructMapper.toProductDto(savedProduct);
+        return new ResponseEntity<>(productDto, HttpStatus.CREATED);
     }
 
     @Override

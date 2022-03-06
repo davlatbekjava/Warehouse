@@ -1,6 +1,7 @@
 package uz.pdp.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import uz.pdp.model.ProductAddDto;
@@ -41,7 +42,7 @@ public class ProductController {
     }
 
     @PostMapping(value = "/add")
-    private ProductDto add(@RequestBody ProductAddDto addDto){
+    private ResponseEntity<?> add(@RequestBody ProductAddDto addDto){
         return productService.add(addDto);
     }
 

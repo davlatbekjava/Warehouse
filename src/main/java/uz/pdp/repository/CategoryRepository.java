@@ -12,7 +12,7 @@ public interface CategoryRepository extends JpaRepository<Category,Long> {
 
     Optional<Category> findByName(String name);
 
-    List<Category> findAllByParentCategoryNullAndActiveTrue();
+    List<Category> findAllByParentCategoryNull();
 
-    List<Category> findAllByParentCategoryAndActiveTrue(Category parentCategory);
+    List<Category> findAllByParentCategory(Category parentCategory);
 }

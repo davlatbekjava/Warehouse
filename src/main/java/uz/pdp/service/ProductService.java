@@ -1,5 +1,6 @@
 package uz.pdp.service;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import uz.pdp.entity.Product;
 import uz.pdp.model.ProductAddDto;
@@ -14,7 +15,7 @@ public interface ProductService {
 
     List<ProductDto> getAllByMeasurement(Long measurementId);
 
-    ProductDto add(ProductAddDto addDto);
+    ResponseEntity<?> add(ProductAddDto addDto);
 
     Product validate(Long id);
 

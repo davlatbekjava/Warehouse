@@ -1,11 +1,13 @@
 package uz.pdp.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.model.CategoryAddDto;
 import uz.pdp.model.CategoryDto;
 import uz.pdp.service.CategoryService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -20,17 +22,17 @@ public class CategoryController {
     }
 
     @PostMapping(value = "/add")
-    private CategoryDto add(@RequestBody CategoryAddDto addDto){
+    private ResponseEntity<?> add(@Valid @RequestBody CategoryAddDto addDto){
         return categoryService.add(addDto);
     }
 
     @GetMapping(value = "/get/parents")
-    private List<CategoryDto> getParents(){
+    private ResponseEntity<List<CategoryDto>> getParents(){
         return categoryService.getParents();
     }
 
     @GetMapping(value = "/get/{id}/children")
-    private List<CategoryDto> getChildren(@PathVariable(value = "id") Long id){
+    private ResponseEntity<?> getChildren(@PathVariable(value = "id") Long id){
         return categoryService.getChildren(id);
     }
 }

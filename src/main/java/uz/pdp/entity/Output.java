@@ -24,7 +24,7 @@ public class Output {
     private LocalDateTime date;
 
     @Column(name = "facture_number")
-    private String facture_number;
+    private String factureNumber;
 
     @Column(name = "code")
     private String code;
