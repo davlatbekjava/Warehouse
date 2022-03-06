@@ -12,4 +12,6 @@ public interface WarehouseService {
     boolean active(Warehouse warehouse);
 
     List<WarehouseDto> getList();
+
+    Warehouse validate(Long id);
 }

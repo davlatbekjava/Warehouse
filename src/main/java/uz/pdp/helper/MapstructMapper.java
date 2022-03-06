@@ -1,6 +1,7 @@
 package uz.pdp.helper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.stereotype.Component;
 import uz.pdp.entity.*;
@@ -41,4 +42,24 @@ public interface MapstructMapper {
     Product toProduct(ProductAddDto addDto);
 
     AttachmentDto toAttachmentDto(Attachment attachment);
+
+    CurrencyDto toCurrencyDto(Currency currency);
+
+    List<CurrencyDto> toCurrencyDto(List<Currency> currencies);
+
+    Currency toCurrency(CurrencyAddDto addDto);
+
+    List<SupplierDto> toSupplierDto(List<Supplier> suppliers);
+
+    SupplierDto toSupplierDto(Supplier supplier);
+
+    Supplier toSupplier(SupplierAddDto addDto);
+
+    @Mapping(source = "currency.name",target = "currency")
+    InputDto toInputDto(Input input);
+
+    List<InputDto> toInputDto(List<Input> input);
+
+
+    InputProductDto toInputProductDto(InputProduct inputProduct);
 }

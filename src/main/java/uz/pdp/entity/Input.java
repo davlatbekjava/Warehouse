@@ -22,7 +22,7 @@ public class Input {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "date",columnDefinition = "timestamp default now()")
+    @Column(name = "date",columnDefinition = "default now()")
     private LocalDateTime date;
 
     @Column(name = "facture_number")

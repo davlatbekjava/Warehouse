@@ -2,6 +2,7 @@ package uz.pdp.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import uz.pdp.entity.Currency;
 import uz.pdp.entity.Warehouse;
 import uz.pdp.helper.MapstructMapper;
 import uz.pdp.helper.Utils;
@@ -63,6 +64,19 @@ public class WarehouseServiceImpl implements WarehouseService {
     public List<WarehouseDto> getList() {
         List<Warehouse> activeWarehouses = warehouseRepository.findAllActiveWarehouses();
         return mapstructMapper.toWarehouseDto(activeWarehouses);
+    }
+
+    @Override
+    public Warehouse validate(Long id) {
+        Optional<Warehouse> warehouseOptional = warehouseRepository.findById(id);
+        if (warehouseOptional.isEmpty()){
+            throw new RuntimeException("Warehouse id = " + id + ", not found!");
+        }
+        Warehouse warehouse = warehouseOptional.get();
+        if (!warehouse.getActive()){
+            throw new RuntimeException("Warehouse id = " + id + ", is inactive!");
+        }
+        return warehouse;
     }
 
 }
