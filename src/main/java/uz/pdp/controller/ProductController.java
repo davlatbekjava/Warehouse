@@ -1,13 +1,17 @@
 package uz.pdp.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.ProductAddDto;
 import uz.pdp.model.ProductDto;
 import uz.pdp.service.ProductService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -21,29 +25,31 @@ public class ProductController {
         this.productService = productService;
     }
 
+    @PostMapping(value = "/add")
+    private ResponseEntity<ApiResponse<ProductDto>> add(@Valid @RequestBody ProductAddDto addDto) {
+        return productService.add(addDto);
+    }
+
     @GetMapping(value = "/get/all")
-    private List<ProductDto> getAll(){
-        return productService.getAll();
+    private ResponseEntity<ApiResponse<List<ProductDto>>> getAll(
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size) {
+        Pageable pageable= PageRequest.of(page,size);
+        return productService.getAll(pageable);
     }
 
     @GetMapping(value = "/get/{id}")
-    private ProductDto get(@PathVariable(value = "id") Long id){
+    private ResponseEntity<ApiResponse<ProductDto>> get(@PathVariable(value = "id") Long id) {
         return productService.get(id);
     }
 
     @GetMapping(value = "/get/all/by-category/{id}")
-    private List<ProductDto> getAllByCategory(@PathVariable(value = "id") Long categoryId){
-        return productService.getAllByCategory(categoryId);
-    }
-
-    @GetMapping(value = "/get/all/by-measurement/{id}")
-    private List<ProductDto> getAllByMeasurement(@PathVariable(value = "id") Long measurementId){
-        return productService.getAllByMeasurement(measurementId);
-    }
-
-    @PostMapping(value = "/add")
-    private ResponseEntity<?> add(@RequestBody ProductAddDto addDto){
-        return productService.add(addDto);
+    private ResponseEntity<ApiResponse<List<ProductDto>>> getAllByCategory(
+            @PathVariable(value = "id") Long categoryId,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size){
+        Pageable pageable= PageRequest.of(page,size);
+        return productService.getAllByCategory(categoryId,pageable);
     }
 
 

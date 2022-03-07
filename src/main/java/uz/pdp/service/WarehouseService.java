@@ -1,17 +1,20 @@
 package uz.pdp.service;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import uz.pdp.entity.Warehouse;
-import uz.pdp.model.WarehouseAddAddDto;
+import uz.pdp.model.ApiResponse;
+import uz.pdp.model.WarehouseAddDto;
 import uz.pdp.model.WarehouseDto;
 
 import java.util.List;
 
 public interface WarehouseService {
-    WarehouseDto add(WarehouseAddAddDto warehouseAddDto);
+    ResponseEntity<ApiResponse<WarehouseDto>> add(WarehouseAddDto addDto);
 
     boolean active(Warehouse warehouse);
 
-    List<WarehouseDto> getList();
+    ResponseEntity<ApiResponse<List<WarehouseDto>>> getAll(Pageable pageable);
 
-    Warehouse validate(Long id);
+    ResponseEntity<ApiResponse<Warehouse>> validate(Long id);
 }

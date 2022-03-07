@@ -1,9 +1,12 @@
 package uz.pdp.service.impl;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import uz.pdp.entity.*;
 import uz.pdp.helper.MapstructMapper;
 import uz.pdp.helper.Utils;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.OutputAddDto;
 import uz.pdp.model.OutputDto;
 import uz.pdp.repository.OutputRepository;
@@ -14,6 +17,8 @@ import uz.pdp.service.WarehouseService;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+
+import static uz.pdp.model.ApiResponse.response;
 
 @Service
 public class OutputServiceImpl implements OutputService {
@@ -33,52 +38,45 @@ public class OutputServiceImpl implements OutputService {
     }
 
     @Override
-    public OutputDto add(OutputAddDto addDto) {
+    public ResponseEntity<ApiResponse<OutputDto>> add(OutputAddDto addDto) {
 
-        Long currencyId = addDto.getCurrencyId();
-        Long clientId = addDto.getClientId();
-        Long warehouseId = addDto.getWarehouseId();
-        String factureNumber = addDto.getFactureNumber();
-
-        if (Utils.isEmpty(currencyId)) {
-            throw new RuntimeException("Currency id should not be null!");
+        ResponseEntity<ApiResponse<Currency>> currencyResponse = currencyService.validate(addDto.getCurrencyId());
+        if (currencyResponse.getStatusCodeValue()!=200){
+            return response(currencyResponse.getBody().getErrorMessage(),currencyResponse.getStatusCode());
         }
+        Currency currency = currencyResponse.getBody().getData();
 
-        if (Utils.isEmpty(clientId)) {
-            throw new RuntimeException("Client id should not be null!");
+        ResponseEntity<ApiResponse<Client>> clientResponse = clientService.validate(addDto.getClientId());
+        if (clientResponse.getStatusCodeValue()!=200){
+            return response(clientResponse.getBody().getErrorMessage(),clientResponse.getStatusCode());
         }
+        Client client = clientResponse.getBody().getData();
 
-        if (Utils.isEmpty(warehouseId)) {
-            throw new RuntimeException("Warehouse id should not be null!");
+        ResponseEntity<ApiResponse<Warehouse>> warehouseResponse = warehouseService.validate(addDto.getWarehouseId());
+        if (warehouseResponse.getStatusCodeValue()!=200){
+            return response(warehouseResponse.getBody().getErrorMessage(),warehouseResponse.getStatusCode());
         }
-
-        if (Utils.isEmpty(factureNumber)) {
-            throw new RuntimeException("Facture Number should not be null!");
-        }
-
-        Currency currency = currencyService.validate(currencyId);
-        Client client = clientService.validate(clientId);
-        Warehouse warehouse = warehouseService.validate(warehouseId);
+        Warehouse warehouse = warehouseResponse.getBody().getData();
 
         Output output = new Output();
         output.setCode(Utils.generateCode());
         output.setCurrency(currency);
-        output.setFactureNumber(factureNumber);
+        output.setFactureNumber(addDto.getFactureNumber());
         output.setClient(client);
         output.setWarehouse(warehouse);
         output.setDate(LocalDateTime.now());
 
         Output savedOutput = outputRepository.save(output);
-        return mapstructMapper.toOutputDto(savedOutput);
+        OutputDto outputDto = mapstructMapper.toOutputDto(savedOutput);
+        return response(outputDto);
     }
 
     @Override
-    public Output validate(Long id) {
+    public ResponseEntity<ApiResponse<Output>> validate(Long id) {
         Optional<Output> outputOptional = outputRepository.findById(id);
         if (outputOptional.isEmpty()){
-            throw new RuntimeException("Output id = " + id + ", not found!");
+            return response("Output id = " + id + ", not found!", HttpStatus.NOT_FOUND);
         }
-
-        return outputOptional.get();
+        return response(outputOptional.get());
     }
 }

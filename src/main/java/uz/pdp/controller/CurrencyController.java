@@ -1,11 +1,14 @@
 package uz.pdp.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.CurrencyAddDto;
 import uz.pdp.model.CurrencyDto;
 import uz.pdp.service.CurrencyService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -19,14 +22,16 @@ public class CurrencyController {
         this.currencyService = currencyService;
     }
 
+    @PostMapping(value = "/add")
+    private ResponseEntity<ApiResponse<CurrencyDto>> add(@Valid @RequestBody CurrencyAddDto addDto){
+        return currencyService.add(addDto);
+    }
+
     @GetMapping(value = "/get/all")
     private List<CurrencyDto> getAll(){
         return currencyService.getAll();
     }
 
-    @PostMapping(value = "/add")
-    private CurrencyDto add(@RequestBody CurrencyAddDto addDto){
-        return currencyService.add(addDto);
-    }
+
 
 }

@@ -3,6 +3,7 @@ package uz.pdp.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.CategoryAddDto;
 import uz.pdp.model.CategoryDto;
 import uz.pdp.service.CategoryService;
@@ -22,17 +23,17 @@ public class CategoryController {
     }
 
     @PostMapping(value = "/add")
-    private ResponseEntity<?> add(@Valid @RequestBody CategoryAddDto addDto){
+    private ResponseEntity<ApiResponse<CategoryDto>> add(@Valid @RequestBody CategoryAddDto addDto){
         return categoryService.add(addDto);
     }
 
     @GetMapping(value = "/get/parents")
-    private ResponseEntity<List<CategoryDto>> getParents(){
+    private ResponseEntity<ApiResponse<List<CategoryDto>>> getParents(){
         return categoryService.getParents();
     }
 
     @GetMapping(value = "/get/{id}/children")
-    private ResponseEntity<?> getChildren(@PathVariable(value = "id") Long id){
+    private ResponseEntity<ApiResponse<List<CategoryDto>>> getChildren(@PathVariable(value = "id") Long id){
         return categoryService.getChildren(id);
     }
 }

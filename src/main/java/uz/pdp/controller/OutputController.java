@@ -1,9 +1,11 @@
 package uz.pdp.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.OutputAddDto;
 import uz.pdp.model.OutputDto;
 import uz.pdp.service.OutputService;
@@ -19,7 +21,7 @@ public class OutputController {
     }
 
     @PostMapping(value = "/add")
-    private OutputDto add(@RequestBody OutputAddDto addDto){
+    private ResponseEntity<ApiResponse<OutputDto>> add(@RequestBody OutputAddDto addDto){
        return outputService.add(addDto);
     }
 

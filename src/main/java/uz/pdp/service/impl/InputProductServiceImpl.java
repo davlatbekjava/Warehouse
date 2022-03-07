@@ -1,18 +1,27 @@
 package uz.pdp.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import uz.pdp.entity.Input;
 import uz.pdp.entity.InputProduct;
 import uz.pdp.entity.Product;
 import uz.pdp.helper.MapstructMapper;
 import uz.pdp.helper.Utils;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.InputProductAddDto;
 import uz.pdp.model.InputProductDto;
+import uz.pdp.model.response.DailyInputProductReport;
 import uz.pdp.repository.InputProductRepository;
 import uz.pdp.service.InputProductService;
 import uz.pdp.service.InputService;
 import uz.pdp.service.ProductService;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import static uz.pdp.model.ApiResponse.response;
 
 @Service
 public class InputProductServiceImpl implements InputProductService {
@@ -31,39 +40,40 @@ public class InputProductServiceImpl implements InputProductService {
     }
 
     @Override
-    public InputProductDto add(InputProductAddDto addDto) {
-        Long inputId = addDto.getInputId();
-        if (Utils.isEmpty(inputId)) {
-            throw new RuntimeException("Input id should not be null!");
-        }
+    public ResponseEntity<ApiResponse<InputProductDto>> add(InputProductAddDto addDto) {
 
-        Long productId = addDto.getProductId();
-        if (Utils.isEmpty(productId)) {
-            throw new RuntimeException("Product id should not be null!");
+        ResponseEntity<ApiResponse<Input>> inputResponse = inputService.validate(addDto.getInputId());
+        if (inputResponse.getStatusCodeValue()!=200){
+            return response(inputResponse.getBody().getErrorMessage(), inputResponse.getStatusCode());
         }
+        Input input = inputResponse.getBody().getData();
 
-        Double amount = addDto.getAmount();
-        if (Utils.isEmpty(amount)) {
-            throw new RuntimeException("Amount should not be null!");
+        ResponseEntity<ApiResponse<Product>> productResponse = productService.validate(addDto.getProductId());
+        if (productResponse.getStatusCodeValue()!=200){
+            return response(productResponse.getBody().getErrorMessage(), productResponse.getStatusCode());
         }
-
-        Double price = addDto.getPrice();
-        if (Utils.isEmpty(price)) {
-            throw new RuntimeException("Price should not be null!");
-        }
-
-        Input input = inputService.validate(inputId);
-        Product product = productService.validate(productId);
+        Product product = productResponse.getBody().getData();
 
         InputProduct inputProduct = new InputProduct();
         inputProduct.setProduct(product);
         inputProduct.setInput(input);
-        inputProduct.setAmount(amount);
-        inputProduct.setPrice(price);
+        inputProduct.setAmount(addDto.getAmount());
+        inputProduct.setPrice(addDto.getPrice());
         inputProduct.setExpireDate(addDto.getExpireDate());
 
         InputProduct savedInputProduct = inputProductRepository.save(inputProduct);
+        InputProductDto inputProductDto = mapstructMapper.toInputProductDto(savedInputProduct);
+        return response(inputProductDto);
+    }
 
-        return mapstructMapper.toInputProductDto(savedInputProduct);
+    @Override
+    public ResponseEntity<ApiResponse<List<DailyInputProductReport>>> getDailyInputProducts(String date) {
+        try {
+            LocalDate parse = LocalDate.parse(date);
+            List<DailyInputProductReport> dailyInputProducts = inputProductRepository.getDailyInputProducts(parse);
+            return response(dailyInputProducts);
+        }catch (Exception e){
+            return response("Wrong date format, required type -> (yyyy-mm-dd)", HttpStatus.BAD_REQUEST);
+        }
     }
 }

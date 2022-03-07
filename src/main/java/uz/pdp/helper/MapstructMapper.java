@@ -13,7 +13,7 @@ import java.util.List;
 @Mapper(componentModel = "spring",unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MapstructMapper {
 
-    Warehouse toWarehouse(WarehouseAddAddDto addDto);
+    Warehouse toWarehouse(WarehouseAddDto addDto);
 
     WarehouseDto toWarehouseDto(Warehouse warehouse);
 

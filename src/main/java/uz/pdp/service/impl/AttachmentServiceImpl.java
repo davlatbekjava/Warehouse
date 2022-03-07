@@ -1,11 +1,14 @@
 package uz.pdp.service.impl;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uz.pdp.entity.Attachment;
 import uz.pdp.entity.AttachmentContent;
 import uz.pdp.entity.Product;
 import uz.pdp.helper.MapstructMapper;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.AttachmentDto;
 import uz.pdp.repository.AttachmentContentRepository;
 import uz.pdp.repository.AttachmentRepository;
@@ -13,6 +16,8 @@ import uz.pdp.service.AttachmentService;
 
 import java.io.IOException;
 import java.util.Optional;
+
+import static uz.pdp.model.ApiResponse.response;
 
 @Service
 public class AttachmentServiceImpl implements AttachmentService {
@@ -52,12 +57,13 @@ public class AttachmentServiceImpl implements AttachmentService {
     }
 
     @Override
-    public Attachment validate(Long id) {
+    public ResponseEntity<ApiResponse<Attachment>> validate(Long id) {
+
         Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
         if (attachmentOptional.isEmpty()){
-            throw new RuntimeException("Product id = " + id + ", not found!");
+            return response("Attachment id = " + id + ", not found!", HttpStatus.NOT_FOUND);
         }
-
-        return attachmentOptional.get();
+        Attachment attachment = attachmentOptional.get();
+        return response(attachment) ;
     }
 }

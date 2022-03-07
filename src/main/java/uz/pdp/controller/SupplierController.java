@@ -1,11 +1,14 @@
 package uz.pdp.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.SupplierAddDto;
 import uz.pdp.model.SupplierDto;
 import uz.pdp.service.SupplierService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -19,23 +22,23 @@ public class SupplierController {
         this.supplierService = supplierService;
     }
 
+    @PostMapping(value = "/add")
+    private ResponseEntity<ApiResponse<SupplierDto>> add(@Valid @RequestBody SupplierAddDto addDto){
+        return supplierService.add(addDto);
+    }
+
     @GetMapping(value = "/get/all")
-    private List<SupplierDto> getAll(){
+    private ResponseEntity<ApiResponse<List<SupplierDto>>> getAll(){
         return supplierService.getAll();
     }
 
     @GetMapping(value = "/get/{id}")
-    private SupplierDto get(@PathVariable(value = "id") Long id){
+    private ResponseEntity<ApiResponse<SupplierDto>> get(@PathVariable(value = "id") Long id){
         return supplierService.get(id);
     }
 
-    @PostMapping(value = "/add")
-    private SupplierDto add(@RequestBody SupplierAddDto addDto){
-        return supplierService.add(addDto);
-    }
-
     @PutMapping(value = "/edit/{id}")
-    private SupplierDto edit(@PathVariable(value = "id") Long id, @RequestBody SupplierAddDto addDto){
+    private ResponseEntity<ApiResponse<SupplierDto>> edit(@PathVariable(value = "id") Long id, @RequestBody SupplierAddDto addDto){
         return supplierService.edit(id, addDto);
     }
 }

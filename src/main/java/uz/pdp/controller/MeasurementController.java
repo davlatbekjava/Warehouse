@@ -1,10 +1,13 @@
 package uz.pdp.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.MeasurementAddDto;
 import uz.pdp.model.MeasurementDto;
 import uz.pdp.service.MeasurementService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -17,13 +20,13 @@ public class MeasurementController {
         this.measurementService = measurementService;
     }
 
-    @GetMapping("/get/all")
-    private List<MeasurementDto> getAll(){
-        return measurementService.getAll();
+    @PostMapping("/add")
+    private ResponseEntity<ApiResponse<MeasurementDto>> add(@Valid @RequestBody MeasurementAddDto addDto){
+        return measurementService.add(addDto);
     }
 
-    @PostMapping("/add")
-    private MeasurementDto add(@RequestBody MeasurementAddDto addDto){
-        return measurementService.add(addDto);
+    @GetMapping("/get/all")
+    private ResponseEntity<ApiResponse<List<MeasurementDto>>> getAll(){
+        return measurementService.getAll();
     }
 }

@@ -1,23 +1,25 @@
 package uz.pdp.service;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.multipart.MultipartFile;
 import uz.pdp.entity.Product;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.ProductAddDto;
 import uz.pdp.model.ProductDto;
 
 import java.util.List;
 
 public interface ProductService {
-    List<ProductDto> getAll();
 
-    List<ProductDto> getAllByCategory(Long categoryId);
+    ResponseEntity<ApiResponse<ProductDto>> add(ProductAddDto addDto);
 
-    List<ProductDto> getAllByMeasurement(Long measurementId);
+    ResponseEntity<ApiResponse<List<ProductDto>>> getAll(Pageable pageable);
 
-    ResponseEntity<?> add(ProductAddDto addDto);
+    ResponseEntity<ApiResponse<ProductDto>> get(Long id);
+    ResponseEntity<ApiResponse<List<ProductDto>>> getAllByCategory(Long categoryId, Pageable pageable);
 
-    Product validate(Long id);
+    ResponseEntity<ApiResponse<Product>> validate(Long id);
 
-    ProductDto get(Long id);
+
+
 }

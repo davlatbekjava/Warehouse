@@ -1,6 +1,8 @@
 package uz.pdp.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import uz.pdp.entity.Currency;
 import uz.pdp.entity.Input;
@@ -8,6 +10,7 @@ import uz.pdp.entity.Supplier;
 import uz.pdp.entity.Warehouse;
 import uz.pdp.helper.MapstructMapper;
 import uz.pdp.helper.Utils;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.InputAddDto;
 import uz.pdp.model.InputDto;
 import uz.pdp.repository.InputRepository;
@@ -19,6 +22,8 @@ import uz.pdp.service.WarehouseService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
+
+import static uz.pdp.model.ApiResponse.response;
 
 @Service
 public class InputServiceImpl implements InputService {
@@ -40,49 +45,44 @@ public class InputServiceImpl implements InputService {
     }
 
     @Override
-    public InputDto add(InputAddDto addDto) {
-        Long currencyId = addDto.getCurrencyId();
-        Long supplierId = addDto.getSupplierId();
-        Long warehouseId = addDto.getWarehouseId();
-        String factureNumber = addDto.getFactureNumber();
+    public ResponseEntity<ApiResponse<InputDto>> add(InputAddDto addDto) {
 
-        if (Utils.isEmpty(currencyId)){
-           throw new RuntimeException("Currency id should not be null!");
-       }
-
-        if (Utils.isEmpty(supplierId)){
-            throw new RuntimeException("Supplier id should not be null!");
+        ResponseEntity<ApiResponse<Currency>> currencyResponse = currencyService.validate(addDto.getCurrencyId());
+        if (currencyResponse.getStatusCodeValue()!=200){
+            return response(currencyResponse.getBody().getErrorMessage(),currencyResponse.getStatusCode());
         }
+        Currency currency = currencyResponse.getBody().getData();
 
-        if (Utils.isEmpty(warehouseId)){
-            throw new RuntimeException("Warehouse id should not be null!");
+        ResponseEntity<ApiResponse<Supplier>> supplierResponse = supplierService.validate(addDto.getSupplierId());
+        if (supplierResponse.getStatusCodeValue()!=200){
+            return response(supplierResponse.getBody().getErrorMessage(),supplierResponse.getStatusCode());
         }
+        Supplier supplier = supplierResponse.getBody().getData();
 
-        if (Utils.isEmpty(factureNumber)){
-            throw new RuntimeException("Facture Number should not be null!");
+        ResponseEntity<ApiResponse<Warehouse>> warehouseResponse = warehouseService.validate(addDto.getWarehouseId());
+        if (warehouseResponse.getStatusCodeValue()!=200){
+            return response(warehouseResponse.getBody().getErrorMessage(),warehouseResponse.getStatusCode());
         }
-
-        Currency currency = currencyService.validate(currencyId);
-        Supplier supplier = supplierService.validate(supplierId);
-        Warehouse warehouse = warehouseService.validate(warehouseId);
+        Warehouse warehouse = warehouseResponse.getBody().getData();
 
         Input input=new Input();
         input.setCurrency(currency);
-        input.setFactureNumber(factureNumber);
+        input.setFactureNumber(addDto.getFactureNumber());
         input.setSupplier(supplier);
         input.setWarehouse(warehouse);
         input.setDate(LocalDateTime.now());
 
         Input savedInput = inputRepository.save(input);
-        return mapstructMapper.toInputDto(savedInput);
+        InputDto inputDto = mapstructMapper.toInputDto(savedInput);
+        return response(inputDto);
     }
 
     @Override
-    public Input validate(Long id) {
+    public ResponseEntity<ApiResponse<Input>> validate(Long id) {
         Optional<Input> inputOptional = inputRepository.findById(id);
         if (inputOptional.isEmpty()){
-            throw new RuntimeException("Category id = " + id + ", not found!");
+            return response("Input id = " + id + ", not found!", HttpStatus.NOT_FOUND);
         }
-        return inputOptional.get();
+        return response(inputOptional.get());
     }
 }

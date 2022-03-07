@@ -1,18 +1,24 @@
 package uz.pdp.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import uz.pdp.entity.Currency;
 import uz.pdp.entity.Warehouse;
 import uz.pdp.helper.MapstructMapper;
 import uz.pdp.helper.Utils;
-import uz.pdp.model.WarehouseAddAddDto;
+import uz.pdp.model.ApiResponse;
+import uz.pdp.model.WarehouseAddDto;
 import uz.pdp.model.WarehouseDto;
 import uz.pdp.repository.WarehouseRepository;
 import uz.pdp.service.WarehouseService;
 
 import java.util.List;
 import java.util.Optional;
+
+import static uz.pdp.model.ApiResponse.response;
 
 @Service
 public class WarehouseServiceImpl implements WarehouseService {
@@ -27,29 +33,27 @@ public class WarehouseServiceImpl implements WarehouseService {
     }
 
     @Override
-    public WarehouseDto add(WarehouseAddAddDto addDto) {
-        String name = addDto.getName();
+    public ResponseEntity<ApiResponse<WarehouseDto>> add(WarehouseAddDto addDto) {
 
-        //warehouse name null emasligini tekshirish
-        if (Utils.isEmpty(name)) {
-            throw new RuntimeException("Warehouse name should not be null");
-        } else {
-            //Bunday nomli warehouse oldin bazada mavjudmasligini tekshirish
-            Optional<Warehouse> warehouseOptional = warehouseRepository.findByName(name);
-            if (warehouseOptional.isPresent()) {
-                throw new RuntimeException("This name warehouse already exist");
-            }
+        //Bunday nomli warehouse oldin bazada mavjudmasligini tekshirish
+        Optional<Warehouse> warehouseOptional = warehouseRepository.findByName(addDto.getName());
+        if (warehouseOptional.isPresent()) {
+            return response("This warehouse name already exist", HttpStatus.FORBIDDEN);
         }
 
         Warehouse warehouse = mapstructMapper.toWarehouse(addDto);
-
         Warehouse savedWarehouse = warehouseRepository.save(warehouse);
-
         WarehouseDto warehouseDto = mapstructMapper.toWarehouseDto(savedWarehouse);
-
-        return warehouseDto;
+        return response(warehouseDto);
     }
 
+    @Override
+    public ResponseEntity<ApiResponse<List<WarehouseDto>>> getAll(Pageable pageable) {
+        Page<Warehouse> warehousePage = warehouseRepository.findAll(pageable);
+        List<Warehouse> warehouseList = warehousePage.getContent();
+        List<WarehouseDto> warehouseDtoList = mapstructMapper.toWarehouseDto(warehouseList);
+        return response(warehouseDtoList);
+    }
 
     @Override
     public boolean active(Warehouse warehouse) {
@@ -61,22 +65,16 @@ public class WarehouseServiceImpl implements WarehouseService {
 
 
     @Override
-    public List<WarehouseDto> getList() {
-        List<Warehouse> activeWarehouses = warehouseRepository.findAllActiveWarehouses();
-        return mapstructMapper.toWarehouseDto(activeWarehouses);
-    }
-
-    @Override
-    public Warehouse validate(Long id) {
+    public ResponseEntity<ApiResponse<Warehouse>> validate(Long id) {
         Optional<Warehouse> warehouseOptional = warehouseRepository.findById(id);
-        if (warehouseOptional.isEmpty()){
-            throw new RuntimeException("Warehouse id = " + id + ", not found!");
+        if (warehouseOptional.isEmpty()) {
+            return response("Warehouse id = " + id + ", not found!",HttpStatus.NOT_FOUND);
         }
         Warehouse warehouse = warehouseOptional.get();
-        if (!warehouse.getActive()){
-            throw new RuntimeException("Warehouse id = " + id + ", is inactive!");
+        if (!warehouse.getActive()) {
+            return response("Warehouse id = " + id + ", is inactive!",HttpStatus.FORBIDDEN);
         }
-        return warehouse;
+        return response(warehouse);
     }
 
 }

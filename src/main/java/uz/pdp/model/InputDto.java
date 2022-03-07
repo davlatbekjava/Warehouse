@@ -2,7 +2,6 @@ package uz.pdp.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import uz.pdp.entity.Currency;
 import uz.pdp.entity.Supplier;
 import uz.pdp.entity.Warehouse;
 

@@ -1,11 +1,16 @@
 package uz.pdp.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import uz.pdp.model.WarehouseAddAddDto;
+import uz.pdp.model.ApiResponse;
+import uz.pdp.model.WarehouseAddDto;
 import uz.pdp.model.WarehouseDto;
 import uz.pdp.service.WarehouseService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -20,12 +25,15 @@ public class WarehouseController {
     }
 
     @PostMapping(value = "/add")
-    private WarehouseDto add(@RequestBody WarehouseAddAddDto warehouseAddDto) {
-        return warehouseService.add(warehouseAddDto);
+    private ResponseEntity<ApiResponse<WarehouseDto>> add(@Valid @RequestBody WarehouseAddDto addDto) {
+        return warehouseService.add(addDto);
     }
 
-    @GetMapping(value = "/get/list")
-    private List<WarehouseDto> getList() {
-        return warehouseService.getList();
+    @GetMapping(value = "/get/all")
+    private ResponseEntity<ApiResponse<List<WarehouseDto>>> getAll(
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size) {
+        Pageable pageable= PageRequest.of(page,size);
+        return warehouseService.getAll(pageable);
     }
 }

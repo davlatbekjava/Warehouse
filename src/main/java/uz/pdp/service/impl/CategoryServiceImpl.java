@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import uz.pdp.entity.Category;
 import uz.pdp.helper.MapstructMapper;
 import uz.pdp.helper.Utils;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.CategoryAddDto;
 import uz.pdp.model.CategoryDto;
 import uz.pdp.repository.CategoryRepository;
@@ -13,6 +14,8 @@ import uz.pdp.service.CategoryService;
 
 import java.util.List;
 import java.util.Optional;
+
+import static uz.pdp.model.ApiResponse.response;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -26,12 +29,12 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public ResponseEntity<?> add(CategoryAddDto addDto) {
+    public ResponseEntity<ApiResponse<CategoryDto>> add(CategoryAddDto addDto) {
 
         //Bunday nomli Category bazada yo'qligini tekshirish
         Optional<Category> categoryOptional = categoryRepository.findByName(addDto.getName());
         if (categoryOptional.isPresent()) {
-            return new ResponseEntity<>("Such Category name already exist", HttpStatus.FORBIDDEN);
+            return response("Such Category name already exist", HttpStatus.FORBIDDEN);
         }
 
         //Parent Categoryni tekshirish
@@ -40,11 +43,12 @@ public class CategoryServiceImpl implements CategoryService {
         Long parentCategoryId = addDto.getParentCategoryId();
 
         if (!Utils.isEmpty(parentCategoryId)) {
-            ResponseEntity<?> responseEntity = validate(parentCategoryId);
-            if (responseEntity.getStatusCodeValue()!=200){
-                return responseEntity;
+            ResponseEntity<ApiResponse<Category>> responseEntity = validate(parentCategoryId);
+
+            if (responseEntity.getStatusCodeValue() != 200) {
+                return response(responseEntity.getBody().getErrorMessage(), responseEntity.getStatusCode());
             }
-            parentCategory = (Category) responseEntity.getBody();
+            parentCategory = responseEntity.getBody().getData();
         }
 
         Category category = mapstructMapper.toCategory(addDto);
@@ -52,40 +56,42 @@ public class CategoryServiceImpl implements CategoryService {
 
         Category savedCategory = categoryRepository.save(category);
         CategoryDto categoryDto = mapstructMapper.toCategoryDto(savedCategory);
-        return new ResponseEntity<>(categoryDto, HttpStatus.CREATED);
+
+        return response(categoryDto, HttpStatus.CREATED);
     }
 
     @Override
-    public ResponseEntity<List<CategoryDto>> getParents() {
+    public ResponseEntity<ApiResponse<List<CategoryDto>>> getParents() {
         List<Category> parents = categoryRepository.findAllByParentCategoryNull();
         List<CategoryDto> categoryDtoList = mapstructMapper.toCategoryDto(parents);
-        return new ResponseEntity<>(categoryDtoList, HttpStatus.OK);
+        return response(categoryDtoList);
     }
 
     @Override
-    public ResponseEntity<?> getChildren(Long id) {
-        ResponseEntity<?> responseEntity = validate(id);
+    public ResponseEntity<ApiResponse<List<CategoryDto>>> getChildren(Long id) {
+        ResponseEntity<ApiResponse<Category>> responseEntity = validate(id);
 
-        if (responseEntity.getStatusCodeValue()!=200){
-            return responseEntity;
+        if (responseEntity.getStatusCodeValue() != 200) {
+            return response(responseEntity.getBody().getErrorMessage(), responseEntity.getStatusCode());
         }
-        Category parentCategory = (Category) responseEntity.getBody();
+        Category parentCategory = responseEntity.getBody().getData();
+
         List<Category> children = categoryRepository.findAllByParentCategory(parentCategory);
         List<CategoryDto> categoryDtoList = mapstructMapper.toCategoryDto(children);
-        return new ResponseEntity<>(categoryDtoList, HttpStatus.OK);
+        return response(categoryDtoList);
     }
 
     @Override
-    public ResponseEntity<?> validate(Long id) {
+    public ResponseEntity<ApiResponse<Category>> validate(Long id) {
         Optional<Category> categoryOptional = categoryRepository.findById(id);
         if (categoryOptional.isEmpty()) {
-            return new ResponseEntity<>("Parent Category id = " + id + ", not found!", HttpStatus.NOT_FOUND);
+            return response("Parent Category id = " + id + ", not found!", HttpStatus.NOT_FOUND);
         }
         Category category = categoryOptional.get();
         if (!category.getActive()) {
-            return new ResponseEntity<>("Parent Category id = " + id + ", is inactive!", HttpStatus.FORBIDDEN);
+            return response("Parent Category id = " + id + ", is inactive!", HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>(category, HttpStatus.OK);
+        return response(category);
     }
 
 

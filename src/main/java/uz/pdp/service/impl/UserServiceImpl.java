@@ -1,11 +1,14 @@
 package uz.pdp.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import uz.pdp.entity.User;
 import uz.pdp.entity.Warehouse;
 import uz.pdp.helper.MapstructMapper;
 import uz.pdp.helper.Utils;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.UserAddDto;
 import uz.pdp.model.UserDto;
 import uz.pdp.repository.UserRepository;
@@ -16,6 +19,8 @@ import uz.pdp.service.WarehouseService;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+
+import static uz.pdp.model.ApiResponse.response;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -34,10 +39,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto add(UserAddDto addDto) {
-        String phoneNumber = addDto.getPhoneNumber();
-
-        Set<Warehouse> warehouses=new HashSet<>();
+    public ResponseEntity<ApiResponse<UserDto>> add(UserAddDto addDto) {
+        Set<Warehouse> warehouses = new HashSet<>();
 
         for (Long warehouseId : addDto.getWarehouseIds()) {
             //warehouse id null emasligini tekshirish
@@ -46,30 +49,22 @@ public class UserServiceImpl implements UserService {
             }
             //bunday warehouse bazada borligini va active ligini tekshirish
             Optional<Warehouse> warehouseOptional = warehouseRepository.findById(warehouseId);
-            if (warehouseOptional.isPresent()){
-                if (warehouseService.active(warehouseOptional.get())){
+            if (warehouseOptional.isPresent()) {
+                if (warehouseService.active(warehouseOptional.get())) {
                     warehouses.add(warehouseOptional.get());
                 }
             }
         }
-
-        //phone number null emasligini tekshirish
-        if (Utils.isEmpty(phoneNumber)) {
-            throw new RuntimeException("User phone number is should not be null!");
-        } else {
-            //bunday phone number bazada yo'qligini tekshirish
-            Optional<User> userOptional = userRepository.findByPhoneNumber(phoneNumber);
-            if (userOptional.isPresent()) {
-                throw new RuntimeException("User this phone number is already exist!");
-            }
+        //bunday phone number bazada yo'qligini tekshirish
+        Optional<User> userOptional = userRepository.findByPhoneNumber(addDto.getPhoneNumber());
+        if (userOptional.isPresent()) {
+            return response("User this phone number is already exist!", HttpStatus.FORBIDDEN);
         }
-
-        User user= mapstructMapper.toUser(addDto);
+        User user = mapstructMapper.toUser(addDto);
         user.setCode(Utils.generateCode());
         user.setWarehouses(warehouses);
-
         User savedUser = userRepository.save(user);
-
-        return mapstructMapper.toUserDto(savedUser);
+        UserDto userDto = mapstructMapper.toUserDto(savedUser);
+        return response(userDto);
     }
 }

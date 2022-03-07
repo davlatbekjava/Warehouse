@@ -1,16 +1,17 @@
 package uz.pdp.service.impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import uz.pdp.entity.Attachment;
 import uz.pdp.entity.Category;
 import uz.pdp.entity.Measurement;
 import uz.pdp.entity.Product;
 import uz.pdp.helper.MapstructMapper;
 import uz.pdp.helper.Utils;
-import uz.pdp.model.AttachmentDto;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.ProductAddDto;
 import uz.pdp.model.ProductDto;
 import uz.pdp.repository.ProductRepository;
@@ -21,6 +22,8 @@ import uz.pdp.service.ProductService;
 
 import java.util.List;
 import java.util.Optional;
+
+import static uz.pdp.model.ApiResponse.response;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -40,50 +43,31 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductDto get(Long id) {
-        Product product = validate(id);
-        return mapstructMapper.toProductDto(product);
-    }
+    public ResponseEntity<ApiResponse<ProductDto>> add(ProductAddDto addDto) {
 
-    @Override
-    public List<ProductDto> getAll() {
-        List<Product> activeProducts = productRepository.findAllByActiveTrue();
-        return mapstructMapper.toProductDto(activeProducts);
-    }
-
-    @Override
-    public List<ProductDto> getAllByCategory(Long categoryId) {
-        List<Product> activeProductsByCategory = productRepository.findAllByCategoryIdAndActiveTrue(categoryId);
-        return mapstructMapper.toProductDto(activeProductsByCategory);
-    }
-
-    @Override
-    public List<ProductDto> getAllByMeasurement(Long measurementId) {
-        List<Product> activeProductsByMeasurement = productRepository.findAllByMeasurementIdAndActiveTrue(measurementId);
-        return mapstructMapper.toProductDto(activeProductsByMeasurement);
-    }
-
-    @Override
-    public ResponseEntity<?> add(ProductAddDto addDto) {
-        //Product name ni tekshirish
-        if (Utils.isEmpty(addDto.getName())){
-            throw new RuntimeException("Product name should not be null");
-        }else {
-            //Bunday nomli product oldin bazada mavjudmasligini tekshirish
-            Optional<Product> productOptional = productRepository.findByName(addDto.getName());
-            if (productOptional.isPresent()){
-                throw new RuntimeException("This name warehouse already exist");
-            }
+        //Bunday nomli product oldin bazada mavjudmasligini tekshirish
+        Optional<Product> productOptional = productRepository.findByName(addDto.getName());
+        if (productOptional.isPresent()) {
+            return response("This name product already exist", HttpStatus.FORBIDDEN);
         }
 
-        ResponseEntity<?> responseEntity = categoryService.validate(addDto.getCategoryId());
-        if (responseEntity.getStatusCodeValue()!=200){
-            return responseEntity;
+        ResponseEntity<ApiResponse<Category>> categoryResponse = categoryService.validate(addDto.getCategoryId());
+        if (categoryResponse.getStatusCodeValue() != 200) {
+            return response(categoryResponse.getBody().getErrorMessage(),categoryResponse.getStatusCode());
         }
-        Category category = (Category) responseEntity.getBody();
+        Category category = categoryResponse.getBody().getData();
 
-        Measurement measurement = measurementService.validate(addDto.getMeasurementId());
-        Attachment attachment = attachmentService.validate(addDto.getAttachmentId());
+        ResponseEntity<ApiResponse<Measurement>> measurementResponse = measurementService.validate(addDto.getMeasurementId());
+        if (measurementResponse.getStatusCodeValue() != 200) {
+            return response(measurementResponse.getBody().getErrorMessage(),measurementResponse.getStatusCode());
+        }
+        Measurement measurement = measurementResponse.getBody().getData();
+
+        ResponseEntity<ApiResponse<Attachment>> attachmentResponse = attachmentService.validate(addDto.getAttachmentId());
+        if (attachmentResponse.getStatusCodeValue() != 200) {
+            return response(attachmentResponse.getBody().getErrorMessage(),attachmentResponse.getStatusCode());
+        }
+        Attachment attachment = attachmentResponse.getBody().getData();
 
         Product product = mapstructMapper.toProduct(addDto);
         product.setCategory(category);
@@ -94,21 +78,52 @@ public class ProductServiceImpl implements ProductService {
 
         Product savedProduct = productRepository.save(product);
         ProductDto productDto = mapstructMapper.toProductDto(savedProduct);
-        return new ResponseEntity<>(productDto, HttpStatus.CREATED);
+        return response(productDto,HttpStatus.CREATED);
     }
 
     @Override
-    public Product validate(Long id) {
-        Optional<Product> productOptional = productRepository.findById(id);
-        if (productOptional.isEmpty()){
-            throw new RuntimeException("Product id = " + id + ", not found!");
-        }
-        Product product = productOptional.get();
-        if (!product.getActive()){
-            throw new RuntimeException("Product id = " + id + ", is inactive!");
-        }
-        return product;
+    public ResponseEntity<ApiResponse<List<ProductDto>>> getAll(Pageable pageable) {
+        Page<Product> productPage = productRepository.findAll(pageable);
+        List<Product> productList = productPage.getContent();
+        List<ProductDto> productDtoList = mapstructMapper.toProductDto(productList);
+        return response(productDtoList);
     }
 
+    @Override
+    public ResponseEntity<ApiResponse<ProductDto>> get(Long id) {
 
+        ResponseEntity<ApiResponse<Product>> productResponse = validate(id);
+        if (productResponse.getStatusCodeValue()!=200){
+            return response(productResponse.getBody().getErrorMessage(), productResponse.getStatusCode());
+        }
+        Product product = productResponse.getBody().getData();
+        ProductDto productDto = mapstructMapper.toProductDto(product);
+        return response(productDto);
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<List<ProductDto>>> getAllByCategory(Long categoryId,Pageable pageable) {
+        ResponseEntity<ApiResponse<Category>> categoryResponse = categoryService.validate(categoryId);
+        if (categoryResponse.getStatusCodeValue()!=200){
+            return response(categoryResponse.getBody().getErrorMessage(), categoryResponse.getStatusCode());
+        }
+        Category category = categoryResponse.getBody().getData();
+        Page<Product> productPage = productRepository.findAllByCategory(category,pageable);
+        List<Product> productList = productPage.getContent();
+        List<ProductDto> productDtoList = mapstructMapper.toProductDto(productList);
+        return response(productDtoList,productPage.getTotalElements());
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Product>> validate(Long id) {
+        Optional<Product> productOptional = productRepository.findById(id);
+        if (productOptional.isEmpty()) {
+            return response("Product id = " + id + ", not found!",HttpStatus.NOT_FOUND);
+        }
+        Product product = productOptional.get();
+        if (!product.getActive()) {
+            return response("Product id = " + id + ", is inactive!",HttpStatus.FORBIDDEN);
+        }
+        return response(product);
+    }
 }

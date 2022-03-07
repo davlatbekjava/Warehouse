@@ -1,19 +1,20 @@
 package uz.pdp.service;
 
+import org.springframework.http.ResponseEntity;
 import uz.pdp.entity.Supplier;
+import uz.pdp.model.ApiResponse;
 import uz.pdp.model.SupplierAddDto;
 import uz.pdp.model.SupplierDto;
 
 import java.util.List;
 
 public interface SupplierService {
-    List<SupplierDto> getAll();
+    ResponseEntity<ApiResponse<SupplierDto>> add(SupplierAddDto addDto);
 
-    SupplierDto get(Long id);
+    ResponseEntity<ApiResponse<List<SupplierDto>>> getAll();
 
-    Supplier validate(Long id);
+    ResponseEntity<ApiResponse<SupplierDto>> get(Long id);
 
-    SupplierDto add(SupplierAddDto addDto);
-
-    SupplierDto edit(Long id, SupplierAddDto addDto);
+    ResponseEntity<ApiResponse<Supplier>> validate(Long id);
+    ResponseEntity<ApiResponse<SupplierDto>> edit(Long id, SupplierAddDto addDto);
 }
